@@ -1,7 +1,7 @@
-all: append1
+all: selezionaMultipli
 
-append1.o: append1.c
-	gcc -Wall -c append1.c
+selezionaMultipli.o: selezionaMultipli.c
+	gcc -Wall -c selezionaMultipli.c
 	
-append1: append1.o
-	gcc -Wall -o append1 append1.o
+selezionaMultipli: selezionaMultipli.o
+	gcc -Wall -o selezionaMultipli selezionaMultipli.o

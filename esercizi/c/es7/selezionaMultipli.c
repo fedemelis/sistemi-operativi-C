@@ -3,37 +3,40 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <string.h>
 #define PERM 0644
 
-int appendFile(char* f){
-
-	int fd, nread;
-	char buffer[BUFSIZ];
-	
-	if((fd = open(f, O_APPEND | O_RDWR | O_CREAT)) < 0){
-		return 1;
-	}
-	
-	while((nread = read(0, buffer, BUFSIZ)) > 0){
-		write(fd, buffer, nread);
-	}
-	
-	return 0;
-
-}
 
 int main(int argc, char **argv){
 	
-	if(argc != 2){
-		printf("Devo inserire esattamente un parametro\n");
+	int fd, nread;
+	char buffer[BUFSIZ];
+	char c[BUFSIZ];
+	
+	
+	if(argc != 3){
+		printf("Devo inserire esattamente due parametri\n");
 		exit(1);
 	}
 	
-	int res = appendFile(argv[1]);
+	if((fd = open(argv[1], O_RDWR)) < 0){
+		printf("Il primo parametro deve essere un file\n");
+		exit(2);
+	}
 	
-	if(res > 0){
-		printf("Errore durante la scrittura in append\n");
-		exit(2);	
+	if((atoi(argv[2])) <= 0){
+		printf("Il primo parametro deve essere un numero stretamente positivo\n");
+		exit(3);
+	}
+	
+	while((nread = read(fd, buffer, BUFSIZ)) > 0){
+		strcat(c, buffer);
+	}
+	
+	for(int i = 0; i < strlen(c); i++){
+		if((i % atoi(argv[2])) == 0){
+			printf("Questo è il %d-esimo carattere del file passato: %c\n", i, c[i]);
+		}
 	}
 	
 	exit(0);	
