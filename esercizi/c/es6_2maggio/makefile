@@ -1,0 +1,7 @@
+all: padreFiglioConConteggioOccorrenze
+
+padreFiglioConConteggioOccorrenze.o: padreFiglioConConteggioOccorrenze.c
+	gcc -Wall -c padreFiglioConConteggioOccorrenze.c
+	
+padreFiglioConConteggioOccorrenze: padreFiglioConConteggioOccorrenze.o
+	gcc -Wall -o padreFiglioConConteggioOccorrenze padreFiglioConConteggioOccorrenze.o
