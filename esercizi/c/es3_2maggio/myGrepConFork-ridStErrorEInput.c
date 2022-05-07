@@ -31,8 +31,8 @@ int main(int argc, char **argv){
 		close(2);
 		open("/dev/null", O_WRONLY);
 		close(0);
-		open("/dev/null", O_RDONLY);
-		execlp("grep", "grep", argv[1], argv[2], (char *) 0);
+		open(argv[2], O_RDONLY);
+		execlp("grep", "grep", argv[1], (char *) 0);
 		exit(-1);
 	}
 	
