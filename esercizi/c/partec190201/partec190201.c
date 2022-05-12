@@ -81,7 +81,7 @@ int main(int argc, char **argv){
 	CON "nreadX != 0" IL CICLO VA AVANTI ALL'INFINITO
 	*/
 	while((nread0 > 0) || (nread1 > 0)){
-		//scrivo su stdin
+		//scrivo su stdout
 		write(1, &msgD, nread1); 
     		write(1, &msgP, nread0);
     		//leggo di nuovo aggiornando i contatori
