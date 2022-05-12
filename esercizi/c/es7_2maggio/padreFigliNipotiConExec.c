@@ -12,7 +12,7 @@
 int main(int argc, char **argv){
 	
 	int fd;
-	int pidfiglio;
+	int pidfiglio, pidnipote;
 	int exitval;
 	int pid;
 	int status;
@@ -44,17 +44,17 @@ int main(int argc, char **argv){
 				printf("errore in fase di creazione\n");
 				exit(9);
 			}
-			if((pidfiglio = fork()) < 0){
+			if((pidnipote = fork()) < 0){
 				printf("Errore nella fork");
 				exit(4);
 			}
-			if(pidfiglio == 0){
+			if(pidnipote == 0){
 				close(1);
 				open(nomefile, O_WRONLY);
 				execlp("sort", "sort", argv[i+1], (char *) 0);
 				exit(-1);
 			}
-			if((pidfiglio = wait(&status)) < 0){
+			if((pidnipote = wait(&status)) < 0){
 				printf("Errore nella wait\n");
 				exit(5);
 			}		
