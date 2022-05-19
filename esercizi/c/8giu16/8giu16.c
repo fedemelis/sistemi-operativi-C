@@ -24,7 +24,7 @@ int main(int argc, char **argv){
 	
 	
 	//var
-	int fd, H, fdCreat, N, pid, quantiLetti, nRead, count, rnd, index;
+	int fd, H, fdCreat, N, pid, quantiLetti, nRead, count, rnd, index, fdTMP;
 	char ch;
 	pipe_t *pipedFTOP;
 	pipe_t *pipedPTOF;
@@ -91,10 +91,16 @@ int main(int argc, char **argv){
 	/* fine pipe*/
 	
 	//creo file
-	if((fdCreat = creat("/tmp/creato", PERM)) < 0){
+	if((fdTMP = creat("/tmp/creato", PERM)) < 0){
 		printf("Errore durante la creazione del file\n");
 		exit(4);
 	}
+	
+	if((fdCreat = open("/tmp/creato", O_WRONLY)) < 0){
+		printf("Errore nell'apertura del file\n");
+		exit(2);
+	}
+	
 	
 	//creo i figli
 	for(int i = 0; i < N; i++){
@@ -124,6 +130,7 @@ int main(int argc, char **argv){
 			}
 			
 			for(int k = 0; k < H; k++){
+				printf("ESECUZIONE: %d\n", k);
 				//leggo fino alla fine della linea
 				nRead = read(fd, &ch, 1);
 				while(nRead > 0 && ch != '\n'){
@@ -133,17 +140,20 @@ int main(int argc, char **argv){
 				//scrivo su pipe
 				quantiLetti += 1;
 				write(pipedFTOP[i][1], &quantiLetti, sizeof(int));
-			
+				//sleep(2);
 				if((read(pipedPTOF[k][0], &index, sizeof(index))) > 0){
 					
 					if(index <= quantiLetti){
-						//printf("L'index è contenuto nel file %d\n", i);
+						printf("IDONEO max: %d index: %d file: %s\n", quantiLetti, index, argv[i+1]);
 						lseek(fd, 0L, SEEK_SET);
 						for(int t = 0; t < index; t++){
 							read(fd, &ch, 1);
 						}
-						//printf("Scrivo sul file %c\n", ch);
+						printf("Scrivo sul file %c all'indice %d\n", ch, index);
 						write(fdCreat, &ch, 1);
+					}
+					else{
+						printf("NON IDONEO max: %d index: %d\n", quantiLetti, index);
 					}
 				}
 				quantiLetti = 0;
@@ -153,29 +163,32 @@ int main(int argc, char **argv){
 		}
 	
 	}
-	
+	//sleep(5);
 	//chiudo pipe
 	for(int i = 0; i < N; i++){
 		close(pipedFTOP[i][1]);
 		close(pipedPTOF[i][0]);
 	}
 	//printf("%d\n", H);
-	
 	for(int j = 0; j < H; j++){
+		printf("PADRE %d\n", j);
 		rnd = mia_random(N);
 		//printf("Scelgo il file numero: %d\n", rnd);
 		for(int i = 0; i < N; i++){
+			read(pipedFTOP[i][0], &count, sizeof(count));
 			if(i == rnd){
-				read(pipedFTOP[i][0], &count, sizeof(count));
+				rnd = mia_random(count);
+				rnd+=1;
 				//printf("DEBUG: ho letto %d caratteri\n", count);
-				for(int k = 0; k < N; k++){
-					rnd = mia_random(count);
-					//printf("Scelgo l'index: %d\n", rnd);
-					write(pipedPTOF[k][1], &rnd, sizeof(rnd));
-				}
 			}
 		}
+		for(int k = 0; k < N; k++){
+			//printf("Scelgo l'index: %d\n", rnd);
+			write(pipedPTOF[k][1], &rnd, sizeof(rnd));
+		}
 	}
+	
+	
 	
 	//aspetto i figli
 	printf("ASPETTO I FIGLI\n");
@@ -198,6 +211,4 @@ int main(int argc, char **argv){
 	printf("DEBUG: Finito\n");
 	exit(0);
 	
-	
 }
-
