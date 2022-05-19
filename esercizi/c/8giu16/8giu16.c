@@ -26,8 +26,8 @@ int main(int argc, char** argv) {
 	//var
 	int fd, H, fdCreat, N, pid, quantiLetti, nRead, count, rnd, index, fdTMP;
 	char ch;
-	pipe_t* pipedFTOP;
-	pipe_t* pipedPTOF;
+	pipe_t* pipedFTOP; //figlio > padre
+	pipe_t* pipedPTOF; //padre > figlio
 	int pidfiglio, status, ritorno;
 
 	quantiLetti = 0;
@@ -96,6 +96,7 @@ int main(int argc, char** argv) {
 		exit(4);
 	}
 
+	//apro file
 	if ((fdCreat = open("/tmp/creato", O_WRONLY)) < 0) {
 		printf("Errore nell'apertura del file\n");
 		exit(2);
@@ -114,7 +115,7 @@ int main(int argc, char** argv) {
 		//cod figlio
 		if (pid == 0) {
 
-			//chiudo pipe 
+			/*chiudo pipe */
 			for (int j = 0; j < N; j++) {
 				close(pipedFTOP[j][0]);
 				close(pipedPTOF[j][1]);
@@ -123,15 +124,19 @@ int main(int argc, char** argv) {
 					close(pipedPTOF[j][0]);
 				}
 			}
+			/*chiudo pipe*/
 
+			//apro il file rispettivo al figlio
 			if ((fd = open(argv[i + 1], O_RDONLY)) < 0) {
 				printf("Errore nell'apertura del file\n");
 				exit(-1);
 			}
 
+			//ciclo sulle linee
 			for (int k = 0; k < H; k++) {
 				//leggo fino alla fine della linea
 				nRead = read(fd, &ch, 1);
+				//se trovo il terminatore esco
 				while (nRead > 0 && ch != '\n') {
 					quantiLetti += nRead;
 					nRead = read(fd, &ch, 1);
@@ -139,6 +144,7 @@ int main(int argc, char** argv) {
 				//scrivo su pipe
 				quantiLetti += 1;
 				write(pipedFTOP[i][1], &quantiLetti, sizeof(int));
+				//leggo dalla pipe padre -> figlio
 				if ((read(pipedPTOF[i][0], &index, sizeof(index))) > 0) {
 
 					if (index <= quantiLetti) {
@@ -174,11 +180,15 @@ int main(int argc, char** argv) {
 		close(pipedFTOP[i][1]);
 		close(pipedPTOF[i][0]);
 	}
+
 	for (int j = 0; j < H; j++) {
+		//scelgo quale da quale file scegliere la lunghezza della linea
 		rnd = mia_random(N);
 		//printf("Scelgo il file numero: %d\n", rnd);
 		for (int i = 0; i < N; i++) {
+			//leggo ogni lunghezza
 			read(pipedFTOP[i][0], &count, sizeof(count));
+			//se è la lunghezza che mi interessa, calcolo nuovamente il numero random
 			if (i == rnd) {
 				rnd = mia_random(count - 1);
 			}
@@ -189,9 +199,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
-
-
-	//aspetto i figli
+	//aspetto i figli (standard x N figli)
 	printf("ASPETTO I FIGLI\n");
 	for (int i = 0; i < N; i++) {
 		if ((pidfiglio = wait(&status)) < 0) {
