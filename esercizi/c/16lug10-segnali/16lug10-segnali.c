@@ -12,13 +12,16 @@
 
 typedef int pipe_t[2];
 
+//struttura da passare
 typedef struct{
 	int index;
 	int len;
 }str;
 
+//flag per
 bool flag = false;
 
+//funzione handler
 void handler(int signo){
 	//printf("DEBUG: ENTRATO");
 	flag = true;	
@@ -28,6 +31,7 @@ int main(int argc, char **argv){
 
 	//var
 	int fd, H, N, quantiLetti, nRead;
+	//var per leggere la linea
 	char ch[255];
 	pipe_t *pipedFTOP;
 	str mystruct;
@@ -37,6 +41,7 @@ int main(int argc, char **argv){
 	
 	quantiLetti = 0;
 	
+	//aggancio il segnale alla funzione
 	signal(SIGUSR1, handler);
 	
 	//controllo param	
@@ -62,6 +67,7 @@ int main(int argc, char **argv){
 		exit(3);
 	}
 	
+	//
 	N = argc - 2;
 	
 	pid = (int *)malloc(sizeof(int) * N);
@@ -104,13 +110,15 @@ int main(int argc, char **argv){
 					close(pipedFTOP[p][0]);
 				}			
 			}
+			//apro file corrispondente
 			if((fd = open(argv[i+1], O_RDONLY)) < 0){
 				//printf("%s\n", argv[i+1]);
-				//printf("Errore nell'apertura del file\n");
+				printf("Errore nell'apertura del file\n");
 				exit(2);
 			}
-			
-			for(int r = 0; r < 4; r++){
+			//leggo le righe
+			for(int r = 0; r < H; r++){
+				//leggo la linea
 				quantiLetti = 0;
 				nRead = read(fd, &ch[quantiLetti], 1);
 				//printf("Letto: %s\n", ch);
@@ -119,28 +127,32 @@ int main(int argc, char **argv){
 					nRead = read(fd, &ch[quantiLetti], 1);
 				}
 				//printf("STRINGA: %s, index: %d\n", ch, i);
+				//codice differenziato per il primo figlio
 				if(i == 0){
 					mystruct.index = i;
 					mystruct.len = quantiLetti;
 				}
+				//codice per gli altri figli
 				else{
 					read(pipedFTOP[i-1][0], &mystruct, sizeof(str));
 					//printf("%d < %d\n", mystruct.len, quantiLetti);
+					//aggiorno la struct
 					if(mystruct.len < quantiLetti){
 						mystruct.index = i;
 						mystruct.len = quantiLetti;
 					}
 				}
-			
+				//scrivo la struct
 				//printf("SCRIVO index: %d len: %d riga: %d inviato dalla pipe: %d\n", mystruct.index, mystruct.len, r, i);
 				write(pipedFTOP[i][1], &mystruct, sizeof(str));
 				sleep(3);
+				//se il flag è true scrivo la linea
 				if(flag == true){
 					printf("%s", ch);
 					flag = false;
 				}
+				//pulisco l'array
 				memset(ch, 0, 255);
-				//TODO: aspettare il segnale
 			}
 			exit(0);
 		}
@@ -158,10 +170,12 @@ int main(int argc, char **argv){
 	}
 	
 	for(int i = 0; i < H; i++){
+		//leggo la struct
 		read(pipedFTOP[N-1][0], &mystructBis, sizeof(str));
 		//printf("RICEVUTO index=%d dalla pipe %d iterazione %d\n", mystructBis.index, N-1, H);
 		for(int ii = 0; ii < N; ii++){
 			if(ii == mystructBis.index){
+				//invio il segnale al figlio giusto
 				printf("Inviato al figlio %d\n", ii);
 				kill(pid[mystructBis.index], SIGUSR1);
 			}
@@ -169,6 +183,7 @@ int main(int argc, char **argv){
 		
 	}
 	
+	//aspetto i figli - STANDARD N FIGLI
 	printf("ASPETTO I FIGLI\n");
 	for(int i = 0; i < N; i++){
 		if((pidfiglio = wait(&status)) < 0){
