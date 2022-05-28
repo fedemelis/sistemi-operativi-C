@@ -19,15 +19,20 @@ typedef struct{
 
 bool flag = false;
 
-void handler(int signo){
+void handlerT(int signo){
 	//printf("DEBUG: ENTRATO");
 	flag = true;	
+}
+
+void handlerF(int signo){
+	//printf("DEBUG: ENTRATO");
+	//printf("DEBUG: NON STAMPO");
 }
 
 int main(int argc, char **argv){
 
 	//var
-	int fd, H, N, quantiLetti, nRead;
+	int fd, H, N, quantiLetti, nRead, quanteScritte;
 	char ch[255];
 	pipe_t *pipedFTOP;
 	str mystruct;
@@ -36,8 +41,10 @@ int main(int argc, char **argv){
 	int pidfiglio, status, ritorno;
 	
 	quantiLetti = 0;
+	quanteScritte = 0;
 	
-	signal(SIGUSR1, handler);
+	signal(SIGUSR1, handlerT);
+	signal(SIGUSR2, handlerF);
 	
 	//controllo param	
 	if(argc < 4){
@@ -134,15 +141,19 @@ int main(int argc, char **argv){
 			
 				//printf("SCRIVO index: %d len: %d riga: %d inviato dalla pipe: %d\n", mystruct.index, mystruct.len, r, i);
 				write(pipedFTOP[i][1], &mystruct, sizeof(str));
-				sleep(3);
+				//sleep(1);
+				//printf("Vado in pausa %d, %d\n", r, getpid());
+				pause(); 
+				//printf("Esco dalla pausa %d, %d\n", r, getpid());
 				if(flag == true){
 					printf("%s", ch);
 					flag = false;
+					quanteScritte+=1;
 				}
 				memset(ch, 0, 255);
 				//TODO: aspettare il segnale
 			}
-			exit(0);
+			exit(quanteScritte);
 		}
 		
 	
@@ -156,14 +167,21 @@ int main(int argc, char **argv){
 		}
 				
 	}
-	
+	//sleep(1);
 	for(int i = 0; i < H; i++){
+		//sleep(1); 
 		read(pipedFTOP[N-1][0], &mystructBis, sizeof(str));
-		//printf("RICEVUTO index=%d dalla pipe %d iterazione %d\n", mystructBis.index, N-1, H);
+		
+		printf("RICEVUTO index=%d dalla pipe %d iterazione %d\n", mystructBis.index, N-1, H);
 		for(int ii = 0; ii < N; ii++){
+			sleep(2);
 			if(ii == mystructBis.index){
-				printf("Inviato al figlio %d\n", ii);
+				printf("Inviato al figlio %d\n", pid[ii]);
 				kill(pid[mystructBis.index], SIGUSR1);
+			}
+			else{
+				printf("Inviato al figlio %d\n", pid[ii]);
+				kill(pid[ii], SIGUSR2);
 			}
 		}
 		
