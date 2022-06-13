@@ -92,6 +92,7 @@ int main(int argc, char** argv) {
 						printf("Errore in sincronizzazione\n");
 						exit(-1);
 					}
+					linea[index+1] = '\0';
 					printf("Il processo di ordine %d e di PID: %d, ha trovato %d occorrenze numeriche nella linea che segue:\n", i, getpid(), count);
 					printf("LINEA: %s\n", linea);
 					quanteOcc = count;
@@ -106,6 +107,8 @@ int main(int argc, char** argv) {
 			exit(quanteOcc);
 		}
 	}
+	//non devo chiudere il lato di lettura della 0-esima pipe
+	//close(piped[0][0]);
 	//chiudo pipe
 	for (int i = 1; i < Q; i++) {
 		close(piped[i][0]);
@@ -124,7 +127,7 @@ int main(int argc, char** argv) {
 		}
 
 		if ((status & 0xFF) != 0) {
-			printf("Errore nella chiusura del figlio\n");
+			printf("Errore nella chiusura del figlio con PID %d\n", pidfiglio);
 			exit(7);
 		}
 		else {
